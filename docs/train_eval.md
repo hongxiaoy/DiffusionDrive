@@ -15,15 +15,7 @@ If your training machine does not have network access, you should download the p
 Before starting training, ensure that you correctly set the `bkb_path` to the path of the downloaded pretrained ResNet-34 model. Additionally, set the `plan_anchor_path` to the path of the downloaded clustered anchors in the file located at `/path/to/DiffusionDrive/navsim/agents/diffusiondrive/transfuser_config.py`.
 
 ```bash
-python $NAVSIM_DEVKIT_ROOT/navsim/planning/script/run_training.py \
-        agent=diffusiondrive_agent \
-        experiment_name=training_diffusiondrive_agent  \
-        train_test_split=navtrain  \
-        split=trainval   \
-        trainer.params.max_epochs=100 \
-        cache_path="${NAVSIM_EXP_ROOT}/training_cache/" \
-        use_cache_without_dataset=True  \
-        force_cache_computation=False 
+bash scripts/training/run_diffusiondrive_training.sh
 ```
 
 ## 3. Evaluation
