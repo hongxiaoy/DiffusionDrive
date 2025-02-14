@@ -21,11 +21,6 @@ bash scripts/training/run_diffusiondrive_training.sh
 ## 3. Evaluation
 You can use the following command to evaluate the trained model `export CKPT=/path/to/your/checkpoint.pth`, for example, you can download the our provided checkpoint from [huggingface](https://huggingface.co/hustvl/DiffusionDrive), and set `CKPT=/path/to/downloaded/huggingface_diffusiondrive_agent_ckpt/diffusiondrive_navsim_88p1_PDMS.pth`:
 ```bash
-python $NAVSIM_DEVKIT_ROOT/navsim/planning/script/run_pdm_score.py \
-        train_test_split=navtest \
-        agent=diffusiondrive_agent \
-        worker=ray_distributed \
-        agent.checkpoint_path=$CKPT \
-        experiment_name=diffusiondrive_agent_eval
+bash scripts/evaluation/run_diffusiondrive.sh
 ```
 
