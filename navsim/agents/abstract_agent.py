@@ -16,6 +16,16 @@ class AbstractAgent(torch.nn.Module, ABC):
     ):
         super().__init__()
         self.requires_scene = requires_scene
+        
+        self._output_dir = None
+    
+    @property
+    def output_dir(self,):
+        return self._output_dir
+    
+    @output_dir.setter
+    def output_dir(self, output_dir):
+        self._output_dir = output_dir
 
     @abstractmethod
     def name(self) -> str:

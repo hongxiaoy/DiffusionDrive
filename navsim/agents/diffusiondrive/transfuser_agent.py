@@ -1,5 +1,7 @@
+import os
 from typing import Any, List, Dict, Optional, Union
 
+from matplotlib import pyplot as plt
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer
@@ -20,6 +22,13 @@ from navsim.agents.diffusiondrive.modules.scheduler import WarmupCosLR
 from omegaconf import DictConfig, OmegaConf, open_dict
 import torch.optim as optim
 from navsim.common.dataclasses import AgentInput, Trajectory, SensorConfig
+
+from navsim.visualization.bev import add_configured_bev_on_ax, add_trajectory_to_bev_ax
+from navsim.visualization.camera import add_camera_ax
+from navsim.visualization.config import CAMERAS_PLOT_CONFIG, TRAJECTORY_CONFIG
+from navsim.visualization.plots import configure_all_ax, configure_ax, configure_bev_ax
+
+
 def build_from_configs(obj, cfg: DictConfig, **kwargs):
     if cfg is None:
         return None
@@ -44,7 +53,7 @@ class TransfuserAgent(AbstractAgent):
         :param lr: learning rate during training
         :param checkpoint_path: optional path string to checkpoint, defaults to None
         """
-        super().__init__()
+        super().__init__(requires_scene=True)
 
         self._config = config
         self._lr = lr
@@ -183,3 +192,63 @@ class TransfuserAgent(AbstractAgent):
     def get_training_callbacks(self) -> List[pl.Callback]:
         """Inherited, see superclass."""
         return [TransfuserCallback(self._config)]
+
+    def compute_trajectory(self, agent_input: AgentInput, scene) -> Trajectory:
+        """
+        Computes the ego vehicle trajectory.
+        :param current_input: Dataclass with agent inputs.
+        :return: Trajectory representing the predicted ego's position in future
+        """
+        self.eval()
+        features: Dict[str, torch.Tensor] = {}
+        # build features
+        for builder in self.get_feature_builders():
+            features.update(builder.compute_features(agent_input))
+
+        # add batch dimension
+        features = {k: v.unsqueeze(0) for k, v in features.items()}
+
+        # forward pass
+        with torch.no_grad():
+            predictions = self.forward(features)
+            poses = predictions["trajectory"].squeeze(0).numpy()
+            
+        agent_trajectory = Trajectory(poses)
+        
+        human_trajectory = scene.get_future_trajectory(4 * 2)  # self._config.trajectory_sampling.num_poses)
+        frame_idx = scene.scene_metadata.num_history_frames - 1  # current frame
+        
+
+        fig, ax = plt.subplots(3, 3, figsize=CAMERAS_PLOT_CONFIG["figure_size"])
+        frame = scene.frames[frame_idx]
+
+        add_camera_ax(ax[0, 0], frame.cameras.cam_l0)
+        add_camera_ax(ax[0, 1], frame.cameras.cam_f0)
+        add_camera_ax(ax[0, 2], frame.cameras.cam_r0)
+
+        add_camera_ax(ax[1, 0], frame.cameras.cam_l1)
+        # add_configured_bev_on_ax(ax[1, 1], scene.map_api, frame)
+        add_configured_bev_on_ax(ax[1, 1], scene.map_api, frame)
+        add_trajectory_to_bev_ax(ax[1, 1], human_trajectory, TRAJECTORY_CONFIG['human'])
+        add_trajectory_to_bev_ax(ax[1, 1], agent_trajectory, TRAJECTORY_CONFIG['agent'])
+        add_camera_ax(ax[1, 2], frame.cameras.cam_r1)
+
+        add_camera_ax(ax[2, 0], frame.cameras.cam_l2)
+        add_camera_ax(ax[2, 1], frame.cameras.cam_b0)
+        add_camera_ax(ax[2, 2], frame.cameras.cam_r2)
+
+        configure_all_ax(ax)
+        configure_bev_ax(ax[1, 1])
+        configure_ax(ax[1, 1])
+        fig.tight_layout()
+        fig.subplots_adjust(wspace=0.01, hspace=0.01, left=0.01, right=0.99, top=0.99, bottom=0.01)
+        
+         # save fig
+        scene_token = scene.scene_metadata.initial_token
+
+        os.makedirs(f'{self._output_dir}/visualization', exist_ok=True)
+        fig.savefig(f'{self._output_dir}/visualization/{scene_token}.png')
+        plt.close()
+
+        # extract trajectory
+        return Trajectory(poses)

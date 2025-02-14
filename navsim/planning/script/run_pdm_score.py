@@ -52,6 +52,8 @@ def run_pdm_score(args: List[Dict[str, Union[List[str], DictConfig]]]) -> List[D
     ), "Simulator and scorer proposal sampling has to be identical"
     agent: AbstractAgent = instantiate(cfg.agent)
     agent.initialize()
+    
+    agent.output_dir = args[0]["output_dir"]
 
     metric_cache_loader = MetricCacheLoader(Path(cfg.metric_cache_path))
     scene_filter: SceneFilter = instantiate(cfg.train_test_split.scene_filter)
@@ -133,6 +135,7 @@ def main(cfg: DictConfig) -> None:
             "cfg": cfg,
             "log_file": log_file,
             "tokens": tokens_list,
+            "output_dir": cfg.output_dir
         }
         for log_file, tokens_list in scene_loader.get_tokens_list_per_log().items()
     ]
