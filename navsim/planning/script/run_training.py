@@ -135,6 +135,7 @@ def main(cfg: DictConfig) -> None:
         model=lightning_module,
         train_dataloaders=train_dataloader,
         val_dataloaders=val_dataloader,
+        # ckpt_path="/home/hongxiao.yu/DiffusionDrive/exp/training_diffusiondrive_agent/2025.02.26.14.10.38/lightning_logs/version_0/checkpoints/epoch=47-step=8016.ckpt"
     )
 
 

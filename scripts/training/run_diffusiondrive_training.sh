@@ -5,4 +5,5 @@ train_test_split=navtrain  \
 split=trainval   \
 trainer.params.max_epochs=100 \
 use_cache_without_dataset=True  \
-force_cache_computation=False 
+force_cache_computation=False \
+cache_path="/mnt/vdb1/hongxiao.yu/logs/navsim/exp/training_cache" \

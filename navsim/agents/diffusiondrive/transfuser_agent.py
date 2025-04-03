@@ -247,7 +247,7 @@ class TransfuserAgent(AbstractAgent):
         scene_token = scene.scene_metadata.initial_token
 
         os.makedirs(f'{self._output_dir}/visualization', exist_ok=True)
-        fig.savefig(f'{self._output_dir}/visualization/{scene_token}.png')
+        # fig.savefig(f'{self._output_dir}/visualization/{scene_token}.png')
         plt.close()
 
         # extract trajectory
